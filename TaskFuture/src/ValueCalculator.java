@@ -5,37 +5,33 @@ import java.util.concurrent.*;
 
 public class ValueCalculator {
     private final int size = 1000000;
-    private final int half = size / 2;
-    private final float[] arr = new float[size];
+    private final int halfSize = size / 2;
+    private final float[] baseArray = new float[size];
 
     public void doCalc() {
         long start = System.currentTimeMillis();
-        float[] a1 = new float[half];
-        float[] a2 = new float[half];
+        float[] halfArray1 = new float[halfSize];
+        float[] halfArray2 = new float[halfSize];
         ExecutorService executor = Executors.newFixedThreadPool(3);
         List<Future<float[]>> futures = new ArrayList<>();
 
-        Arrays.fill(arr, 1);
-        System.arraycopy(arr, 0, a1, 0, half);
-        System.arraycopy(arr, half, a2, 0, half);
-        
-        futures.add(executor.submit(changeValuesGetFutures(a1)));
-        futures.add(executor.submit(changeValuesGetFutures(a2)));
+        Arrays.fill(baseArray, 1);
+        System.arraycopy(baseArray, 0, halfArray1, 0, halfSize);
+        System.arraycopy(baseArray, halfSize, halfArray2, 0, halfSize);
 
-        executor.shutdown();
+        futures.add(executor.submit(changeValuesGetFutures(halfArray1)));
+        futures.add(executor.submit(changeValuesGetFutures(halfArray2)));
 
         try {
-            a1 = futures.get(0).get();
-            a2 = futures.get(1).get();
+            halfArray1 = futures.get(0).get();
+            halfArray2 = futures.get(1).get();
+            executor.shutdown();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
 
-        System.out.println(a1[0] + " " + a1[10] + " " + a1[half-1]);
-        System.out.println(a2[0] + " " + a2[10] + " " + a2[half-1]);
-
-        System.arraycopy(a1, 0, arr, 0, half);
-        System.arraycopy(a2, 0, arr, half, half);
+        System.arraycopy(halfArray1, 0, baseArray, 0, halfSize);
+        System.arraycopy(halfArray2, 0, baseArray, halfSize, halfSize);
 
         System.out.printf("time execute program - %s milliseconds%n", System.currentTimeMillis() - start);
     }
@@ -44,7 +40,8 @@ public class ValueCalculator {
         return () -> {
             float[] internalArray = new float[arr.length];
             for (int i = 0; i < arr.length; i++) {
-                internalArray[i] = (float) (arr[i] * Math.sin(0.2f + i / 5) * Math.cos(0.2f + i / 5) * Math.cos(0.4f + i / 2));
+                internalArray[i] = (float) (arr[i] * Math.sin(0.2f + i / 5) * Math.cos(0.2f + i / 5)
+                        * Math.cos(0.4f + i / 2));
             }
             return internalArray;
         };
